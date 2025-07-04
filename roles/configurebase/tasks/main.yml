@@ -1,0 +1,78 @@
+---
+
+# - ansible.builtin.include_role: # knownoshost
+#     name: alex.base.knownoshost
+
+# - name: First logon
+#   shell: |
+#     {{ role_path }}/scripts/first.logon.sh "{{ prop_ipaddress }}" "{{ prop_admin_password }}"
+#     if [[ "$?" != "0" ]]; then
+#       echo "Error executing script" 
+#     fi
+#   args:
+#     executable: /bin/bash
+#   register: expectresult
+#   changed_when: '"Changed" in expectresult.stdout'
+#   failed_when: '("Error" in expectresult.stdout) or ("Host key verification failed." in expectresult.stdout)'
+#   connection: local
+#   become: false
+
+# - ansible.builtin.include_role: # knownoshost
+#     name: alex.base.knownoshost
+
+# - name: Create Home
+#   shell: |
+#     {{ role_path }}/scripts/create.home.sh "{{ prop_ipaddress }}" "{{ prop_admin_username }}" "{{ prop_admin_password }}"
+#     if [[ "$?" != "0" ]]; then
+#       echo "Error executing script" 
+#     fi
+#   args:
+#     executable: /bin/bash
+#   register: result
+#   changed_when: '"Changed" in result.stdout'
+#   failed_when: '("Error" in result.stdout) or ("Host key verification failed." in result.stdout)'
+#   connection: local
+#   become: false
+
+# - name: Add User
+#   shell: |
+#     {{ role_path }}/scripts/add.user.sh "{{ prop_ipaddress }}" "{{ prop_admin_username }}" "{{ prop_admin_password }}"
+#     if [[ "$?" != "0" ]]; then
+#       echo "Error executing script" 
+#     fi
+#   args:
+#     executable: /bin/bash
+#   register: result
+#   changed_when: '"Changed" in result.stdout'
+#   failed_when: '("Error" in result.stdout) or ("Host key verification failed." in result.stdout)'
+#   connection: local
+#   become: false
+
+- name: Init User
+  shell: |
+    {{ role_path }}/scripts/init.user.sh "{{ prop_ipaddress }}" "{{ prop_admin_username }}" "{{ prop_admin_password }}"
+    if [[ "$?" != "0" ]]; then
+      echo "Error executing script" 
+    fi
+  args:
+    executable: /bin/bash
+  register: result
+  changed_when: '"Changed" in result.stdout'
+  failed_when: '("Error" in result.stdout) or ("Host key verification failed." in result.stdout)'
+  connection: local
+  become: false
+
+- name: Ensure autologon
+  shell: |
+    {{ role_path }}/scripts/auto.logon.sh "{{ prop_ipaddress }}" "{{ prop_admin_username }}" "{{ prop_admin_password }}" "{{ prop_local_user_ssh_key }}" "{{ prop_local_user_ssh_pub }}"
+    if [[ "$?" != "0" ]]; then
+      echo "Error executing script" 
+    fi
+  args:
+    executable: /bin/bash
+  register: expectresult
+  changed_when: '"Changed" in expectresult.stdout'
+  failed_when: '"Error" in expectresult.stdout'
+  connection: local
+  become: false
+

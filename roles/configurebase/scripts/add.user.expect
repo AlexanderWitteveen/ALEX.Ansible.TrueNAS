@@ -1,0 +1,39 @@
+#!/usr/bin/expect -f
+
+set ipaddress [lindex $argv 0]
+set username [lindex $argv 1]
+set password [lindex $argv 2]
+set defaultusername "admin"
+
+set timeout 30
+
+spawn ssh $defaultusername@$ipaddress
+
+expect {
+    "password:" {
+        send -- "$password\r"
+        expect "Welcome to TrueNAS" {
+            expect "$defaultusername@*"
+            send -- "sudo mkdir /mnt/home/$username \r"
+
+            expect "$defaultusername@*"
+            send -- "cli -c \"account user create uid=1000 username=$username password=$password full_name=$username home=/mnt/home/$username groups=builtin_administrators,admin smb=true group_create=true sudo_commands=ALL sudo_commands_nopasswd=ALL\"\r"
+
+            #send_user "**** Finished Expect: User already exists\n"
+
+            expect "$defaultusername@*"
+            send -- "exit\r"
+
+            expect eof
+
+            send_user "**** Changed: Finished Expect: New user added and configured\n"
+        }
+    }
+    "Permission denied" {
+        expect eof
+
+        send_user "**** Error: Finished Expect: SSH No password allowed\n"
+    }
+}
+
+

@@ -1,0 +1,42 @@
+#!/usr/bin/expect -f
+
+set ipaddress [lindex $argv 0]
+set username [lindex $argv 1]
+set password [lindex $argv 2]
+
+
+set timeout 10
+
+spawn ssh $username@$ipaddress
+
+expect {
+    "password:" {
+        send -- "$password\r"
+        expect { 
+            "$username@*" {
+                send -- "exit\r"
+
+                expect eof
+
+                send_user "**** Changed: Finished Expect: New user added and configured\n"
+            }
+            "This is the Z Shell" { 
+
+                expect "Type one of the keys in parentheses ---\n"
+                send -- "2"
+
+                expect "$username@*"
+                send -- "\r"
+
+                expect "$username@*"
+                send -- "exit\r"
+
+                expect eof
+    
+                send_user "**** Changed: User initialized\n"
+            }
+        }
+    }
+}
+
+

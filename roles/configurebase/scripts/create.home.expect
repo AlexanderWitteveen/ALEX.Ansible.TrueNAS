@@ -1,0 +1,31 @@
+#!/usr/bin/expect -f
+
+set ipaddress [lindex $argv 0]
+set username [lindex $argv 1]
+set password [lindex $argv 2]
+set defaultusername "admin"
+
+set timeout 30
+
+spawn ssh $defaultusername@$ipaddress
+
+expect {
+    "password:" {
+        send -- "$password\r"
+        expect "Welcome to TrueNAS" {
+            expect "$defaultusername@*"
+            send -- "drive=\$(basename \$(readlink -f /dev/disk/by-path/pci-0000:01:02.0-scsi-0:0:0:1 ) )\r"
+
+            expect "$defaultusername@*"
+            send -- "cli -c \"storage pool create name=home topology={\\\"data\\\":\[{\\\"type\\\":\\\"STRIPE\\\",\\\"disks\\\":\[\\\"\$drive\\\"\]}\]}\"\r"
+
+            expect "$defaultusername@*"
+            send -- "exit\r"
+
+            expect eof
+
+            send_user "**** Changed: Finished Expect: Home drive created\n"
+        }
+    }
+}
+

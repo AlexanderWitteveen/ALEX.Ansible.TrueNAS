@@ -1,0 +1,53 @@
+#!/usr/bin/expect -f
+
+set ipaddress [lindex $argv 0]
+set password [lindex $argv 1]
+set installusername "admin"
+set installpassword "truenas"
+
+set timeout 30
+
+spawn ssh -o StrictHostKeyChecking=no $installusername@$ipaddress
+
+expect {
+    "password:" {
+        send -- "$installpassword\r"
+        expect {
+            "Welcome to TrueNAS" {
+                expect "$installusername@*"
+                send -- "cli -c \"account user update admin username=$installusername password=$password\"\r"
+
+                expect "$installusername@*"
+                send -- "cli -c \"account user update admin sudo_commands_nopasswd=ALL\"\r"
+
+                expect "$installusername@*"
+                send -- "exit\r"
+
+                expect eof
+
+                send_user "**** Changed: Finished Expect: No expire - New password for default user forced\n"
+            }
+            "Permission denied" {
+                send -- "$password\r"
+                expect {
+                    "Welcome to TrueNAS" {
+
+                        expect "$installusername@*"
+                        send -- "exit\r"
+
+                        expect eof
+
+                        send_user "**** Finished Expect: New password has previously been set\n"
+                    }
+                    "Permission denied" {
+                        send -- "\x03"
+
+                        expect eof
+
+                        send_user "**** Error: Finished Expect: New password has previously been blocked (I think)\n"
+                    }
+                }
+            }
+        }
+    }
+}
